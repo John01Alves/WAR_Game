@@ -19,8 +19,8 @@ movimento_direita = False
 atirar = False
 
 bela_img = pygame.image.load('img/icones/bala.png').convert_alpha()
-
-bg = (233, 212, 96, 1)
+# 233, 212, 96, 1
+bg = (0, 0, 0)
 # green = (60, 179, 113)
 # blue = (0, 0, 255)
 
@@ -31,12 +31,15 @@ def desenho_bg():
 
 
 class Soldado(pygame.sprite.Sprite):
-    def __init__(self, jogador_tipo, x, y, scale, velocidade):
+    def __init__(self, jogador_tipo, x, y, scale, velocidade, monicao):
         pygame.sprite.Sprite.__init__(self)
         self.vivo = True
         self.jogador_tipo = jogador_tipo
         self.velocidade = velocidade
+        self.monicao = monicao
+        self.inicio_monicao = monicao
         self.vel_y = 0
+        self.atirar_bala_count = 0
         self.direcao = 1
         self.pular = False
         self.no_ar = True
@@ -59,6 +62,11 @@ class Soldado(pygame.sprite.Sprite):
         self.image = self.animacao_lista[self.acao][self.frame_index]
         self.rect = self.image.get_rect()
         self.rect.center = (x, y)
+
+    def atualizar(self):
+        self.atualizar_animacao()
+        if self.atirar_bala_count > 0:
+            self.atirar_bala_count -= 1
 
     def movimento(self, movimento_esquerda, movimento_direita):
         dx = 0
@@ -87,6 +95,13 @@ class Soldado(pygame.sprite.Sprite):
         self.rect.x += dx
         self.rect.y += dy
 
+    def atirar(self):
+        if self.atirar_bala_count == 0 and self.monicao > 0:
+            self.atirar_bala_count = 20
+            bala = Bala(self.rect.centerx + (0.6 * self.rect.size[0] * self.direcao), self.rect.center, self.direcao)
+            bala_grupo.add(bala)
+            self.monicao -= 1
+
     def atualizar_animacao(self):
         animacao_fresh = 100
         self.image = self.animacao_lista[self.acao][self.frame_index]
@@ -110,16 +125,21 @@ class Bala(pygame.sprite.Sprite):
     def __init__(self, x, y, direcao):
         pygame.sprite.Sprite.__init__(self)
         self.velocidade = 10
-        self.image = bala
+        self.image = bela_img
         self.rect = self.image.get_rect()
         self.rect.center = (x, y)
         self.direcao = direcao
 
+    def update(self):
+        self.rect.x += (self.direcao * self.velocidade)
+        if self.rect.right < 0 or self.rect.left > tela_largura - 20:
+            self.kill()
+
 
 bala_grupo = pygame.sprite.Group()
 
-jogador = Soldado('jogador', 200, 200, 2, 5)
-inimigo = Soldado('inimigo', 400, 200, 2, 5)
+jogador = Soldado('jogador', 200, 200, 2, 5, 20)
+inimigo = Soldado('inimigo', 400, 200, 2, 5, 20)
 
 run = True
 while run:
@@ -133,8 +153,7 @@ while run:
 
     if jogador.vivo:
         if atirar:
-            bala = Bala(jogador.rect.centerx + (0.6 * jogador.rect.size[0] * jogador.direcao), jogador)
-            bala_grupo.add(bala)
+            jogador.atirar()
         if jogador.no_ar:
             jogador.atualizar_acao(2)
         elif movimento_esquerda or movimento_direita:
@@ -152,16 +171,17 @@ while run:
                 movimento_esquerda = True
             if event.key == pygame.K_d:
                 movimento_direita = True
-            if event.key == pygame.K_w and jogador.vivo:
-                jogador.pular = True
             if event.key == pygame.K_ESCAPE:
                 run = False
+            if event.key == pygame.K_w and jogador.vivo:
+                jogador.pular = True
 
         if event.type == pygame.KEYUP:
             if event.key == pygame.K_a:
                 movimento_esquerda = False
             if event.key == pygame.K_d:
                 movimento_direita = False
-
+            if event.key == pygame.K_SPACE:
+                atirar = True
     pygame.display.update()
 pygame.quit()
