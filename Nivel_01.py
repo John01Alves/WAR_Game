@@ -39,6 +39,8 @@ class Soldado(pygame.sprite.Sprite):
         self.monicao = monicao
         self.inicio_monicao = monicao
         self.vel_y = 0
+        self.saude_vida = 100
+        self.max_vida = self.max_vida
         self.atirar_bala_count = 0
         self.direcao = 1
         self.pular = False
@@ -48,7 +50,7 @@ class Soldado(pygame.sprite.Sprite):
         self.frame_index = 0
         self.acao = 0
         self.atualizar_tempo = pygame.time.get_ticks()
-        animacao_tipo = ['jogador-img', 'correr', 'pular']
+        animacao_tipo = ['jogador-img', 'correr', 'pular', 'morto']
 
         for animacao in animacao_tipo:
             temp_list = []
@@ -65,6 +67,7 @@ class Soldado(pygame.sprite.Sprite):
 
     def atualizar(self):
         self.atualizar_animacao()
+        self.checar_a_vida()
         if self.atirar_bala_count > 0:
             self.atirar_bala_count -= 1
 
@@ -117,6 +120,13 @@ class Soldado(pygame.sprite.Sprite):
             self.frame_index = 0
             self.atualizar_tempo = pygame.time.get_ticks()
 
+    def checar_a_vida(self):
+        if self.saude_vida <= 0:
+            self.saude_vida = 0
+            self.velocidade = 0
+            self.vivo = False
+            self.atualizar_acao(3)
+
     def desenho(self):
         tela.blit(pygame.transform.flip(self.image, self.virar, False), self.rect)
 
@@ -134,6 +144,14 @@ class Bala(pygame.sprite.Sprite):
         self.rect.x += (self.direcao * self.velocidade)
         if self.rect.right < 0 or self.rect.left > tela_largura - 20:
             self.kill()
+        if pygame.sprite.spritecollide(jogador, bala_grupo, False):
+            if jogador.vivo:
+                jogador.saude_vida -= 5
+                self.kill()
+        if pygame.sprite.spritecollide(inimigo, bala_grupo, False):
+            if inimigo.vivo:
+                inimigo.saude_vida -= 25
+                self.kill()
 
 
 bala_grupo = pygame.sprite.Group()
@@ -145,9 +163,10 @@ run = True
 while run:
     relogio.tick(fps)
     desenho_bg()
-    jogador.atualizar_animacao()
+    jogador.atualizar()
     jogador.desenho()
     inimigo.desenho()
+    inimigo.atualizar()
     bala_grupo.update()
     bala_grupo.draw(tela)
 
@@ -163,25 +182,25 @@ while run:
         jogador.movimento(movimento_esquerda, movimento_direita)
 
     for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            run = False
-
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_a:
-                movimento_esquerda = True
-            if event.key == pygame.K_d:
-                movimento_direita = True
-            if event.key == pygame.K_ESCAPE:
+            if event.type == pygame.QUIT:
                 run = False
-            if event.key == pygame.K_w and jogador.vivo:
-                jogador.pular = True
 
-        if event.type == pygame.KEYUP:
-            if event.key == pygame.K_a:
-                movimento_esquerda = False
-            if event.key == pygame.K_d:
-                movimento_direita = False
-            if event.key == pygame.K_SPACE:
-                atirar = True
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_a:
+                    movimento_esquerda = True
+                if event.key == pygame.K_d:
+                    movimento_direita = True
+                if event.key == pygame.K_SPACE:
+                    atirar = True
+                if event.key == pygame.K_w and jogador.vivo:
+                    jogador.pular = True
+
+            if event.type == pygame.KEYUP:
+                if event.key == pygame.K_a:
+                    movimento_esquerda = False
+                if event.key == pygame.K_d:
+                    movimento_direita = False
+                if event.key == pygame.K_SPACE:
+                    atirar = False
     pygame.display.update()
 pygame.quit()
