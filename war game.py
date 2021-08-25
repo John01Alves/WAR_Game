@@ -1,5 +1,6 @@
 import pygame
 import os
+from data.levels.episode1 import level_one
 
 pygame.init()
 screen = pygame.display.set_mode([800, 533])
@@ -78,7 +79,7 @@ while True:
             episode_1 = font.render('Episode 1', True, (0, 155, 255))
             screen.blit(episode_1, ((800 / 2) - 22, (400 / 2)))
 
-            back = font.render('Quit', True, (255, 255, 255))
+            back = font.render('Back', True, (255, 255, 255))
             screen.blit(back, ((800 / 2) - 24, (400 / 2) + 22))
         elif menu == [1, 2]:
             screen.fill((0, 0, 0))
@@ -87,11 +88,12 @@ while True:
             episode_1 = font.render('Episode 1', True, (255, 255, 255))
             screen.blit(episode_1, ((800 / 2) - 22, (400 / 2)))
 
-            back = font.render('Quit', True, (0, 155, 255))
+            back = font.render('Back', True, (0, 155, 255))
             screen.blit(back, ((800 / 2) - 24, (400 / 2) + 22))
 
         if menu == [1, 11]:
-            menu = [1, 1]
+            screen.fill((0, 0, 0))
+            level_one()
         elif menu == [1, 12]:
             menu = [0, 2]
 
